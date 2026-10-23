@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
-  <img src="assets/hero-light.svg" width="100%" alt="I'm Muhammed, Software Engineer from Germany, focused on automation and building the tools I actually need. Things I code with: HTML5, CSS, Angular, Ionic, React, React Native, Flutter, JavaScript, TypeScript, Java, Spring, Python, FastAPI, SQL, SAP, ABAP, Playwright, CI/CD (GitLab), Git, Docker, Terraform, GCP.">
+  <img src="assets/hero-light.svg" width="100%" alt="I'm Muhammed, Software Engineer from Germany, focused on automation and building the tools I need. Things I code with: HTML5, CSS, Angular, Ionic, React, React Native, Flutter, JavaScript, TypeScript, Java, Spring, Python, FastAPI, SQL, SAP, ABAP, Playwright, CI/CD (GitLab), Git, Docker, Terraform, GCP.">
 </picture>
 
 <picture>
