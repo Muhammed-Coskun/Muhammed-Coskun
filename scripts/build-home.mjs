@@ -38,6 +38,8 @@ const THEMES = {
     bank: '#2c394a', r: '#e5534b', R: '#a8322c',
     // Pingu's scarf (f, F) and beak (n, N), and his snowman's hat (h, i) and eyes (v)
     f: '#a9cbe8', F: '#7ea6cc', n: '#f2643c', N: '#c4452a', h: '#f4a7c4', i: '#d97ba0', v: '#4a86d0',
+    // the fisherman's hat (g, G), and the dark water (D, E) in his hole in the ice
+    G: '#2a7d38', D: '#0c1d2b', E: '#2f5a78',
   },
   light: {
     text: '#1f2328', accent: '#bc4c00',
@@ -56,6 +58,7 @@ const THEMES = {
     doorLit: '#ffd27a', doorJamb: '#dd9b4f', spill1: '#f7efdf', spill2: '#fde4ae', S: '#8a5a28',
     bank: '#e3eaf2', r: '#e5534b', R: '#b62324',
     f: '#9cc3e6', F: '#6f9bc6', n: '#ef5a32', N: '#bf3f24', h: '#f29bbd', i: '#d8749b', v: '#2f6db5',
+    G: '#1f7a35', D: '#3d6f92', E: '#86b6d4',
   },
 };
 
@@ -197,8 +200,93 @@ function snowball(d, right = false) {
   }).join(''));
   return { x: right ? n : n >> 1, rows };
 }
+// Draws `art` over `rows` with its top left corner at (x, y), widening as needed.
+function overlay(rows, x, y, art) {
+  const w = Math.max(...rows.map((r) => r.length), x + Math.max(...art.map((r) => r.length)));
+  const out = rows.map((r) => [...r.padEnd(w, '.')]);
+  art.forEach((r, j) => [...r].forEach((ch, i) => { if (ch !== '.') out[y + j][x + i] = ch; }));
+  return out.map((r) => r.join(''));
+}
 // the snowman's face, drawn over a head of diameter 6
-const FACE = ['........', '........', '..v..v..', '........', '...pp...', '..o..o..', '...oo...', '........'];
+const FACE = ['........', '........', '..v..v..', '........', '...pp...', '........', '...NN...', '........'];
+// Pingu's little plush snowman, the one he hugs in the photo, in its pink hat
+const PLUSH = ['.oooo.', 'ohhhho', 'oiiiio', 'ovwwvo', 'owppwo', '.owwo.', 'owwwwo', 'owwwso', '.oooo.'];
+
+// Muezza walking, leaping, and curled up in bed asleep and awake; and a fish
+// small enough for her to carry off, as it gets eaten down to the bones.
+const BLANK20 = '....................';
+const CAT_WALK = [
+  [...CAT, '..ocoooco..ocoooco..', '.oco..oco.oco..oco..', '.oo....oo.oo....oo..'],
+  [BLANK20, ...CAT, '....ococo..ococo....', '....ooooo..ooooo....'],
+];
+const CAT_LEAP = [
+  '...............o...o..',
+  '..............oco.oco.',
+  'oo............occccco.',
+  'oco..........occgccgo.',
+  '.oco.........occclplo.',
+  '..ocooooooooooollllo..',
+  '...occcCccCccccclllo..',
+  '...occcCccCcccccllcco.',
+  '...occcccccccccccoocco',
+  '..occoooooooooooo..oo.',
+  '.occo.................',
+  'occo..................',
+  '.oo...................',
+];
+const CAT_CURLED = [
+  '............o...o...',
+  '...ooooooo.oco.oco..',
+  '..occCccCccocccccco.',
+  '.occCccCcccococcoco.',
+  'occcCccccccocclplco.',
+  'occccccccccollllllo.',
+  'occccCCCCCCCCCCccco.',
+  '.ooooooooooooooooo..',
+];
+const CAT_AWAKE = CAT_CURLED.map((r, j) => (j === 3 ? '.occCccCcccoccgcgco.' : r));
+const MOUTHFUL = ['o.ooo.', 'oouuoo', 'o.ooo.'];
+const BITES = [MOUTHFUL, ['o.oo', 'oouo', 'o.oo'], ['o...o', 'ooooo', 'o...o']];
+
+// A fisherman penguin in a green bobble hat. The helper puts his feet under
+// him and can give him other eyes or rows.
+const FISHER = [
+  '.......oo.......',
+  '......owwo......',
+  '.....oowwoo.....',
+  '....oggggggo....',
+  '...oggggggggo...',
+  '...oGGGGGGGGo...',
+  ...PENGUIN.slice(3),
+];
+const FISHER_EYES = { happy: ['...okkkkkkwowo..', '...okkkkkwowowo.'], low: ['...okkkkkkwwwo..', '...okkkkkwooowo.'] };
+const fisher = (eyes, rows = FISHER) => [...rows.map((r, j) => (eyes && (j === 6 || j === 7) ? FISHER_EYES[eyes][j - 6] : r)), '.....yyy..yyy...'];
+// his rod held out over the hole, dipping as something bites, and raised to
+// haul it in; his pick raised over his shoulder and brought down on the ice.
+// Pixels as [x, y, colour], the colour the rod's brown unless given.
+const ROD = {
+  out: [[14, 13], [15, 12], [16, 12], [17, 11], [18, 10], [19, 9], [20, 9], [21, 8], [22, 7]],
+  dip: [[14, 13], [15, 13], [16, 12], [17, 12], [18, 12], [19, 11], [20, 11], [21, 11], [22, 11]],
+  up: [[14, 13], [15, 12], [15, 11], [16, 10], [16, 9], [17, 8], [17, 7], [18, 6], [18, 5]],
+};
+const PICK = {
+  up: [
+    [14, 12], [14, 11], [15, 10], [15, 9], [16, 8], [16, 7],
+    [14, 4, 'o'], [15, 4, 'q'], [16, 4, 'q'], [17, 4, 'q'], [18, 4, 'o'], [15, 5, 'o'], [16, 5, 'o'], [17, 5, 'o'],
+  ],
+  down: [
+    [15, 13], [16, 14], [17, 15], [18, 16], [19, 17], [20, 18],
+    [19, 17, 'q'], [20, 17, 'q'], [21, 17, 'o'], [19, 18, 'q'], [20, 18, 'o'], [21, 18, 'o'],
+  ],
+};
+// a flipper gripping a rod or pick, which is drawn on, and the rod's line
+// hanging straight down in column lx from row top to row bottom
+function holding(rows, tool, [lx, top, bottom] = []) {
+  let out = overlay(rows, 12, 12, ['oko', 'okko']);
+  for (const [x, y, c = 'C'] of tool) out = overlay(out, x, y, [c]);
+  for (let y = top; y <= bottom; y++) out = overlay(out, lx, y, ['q']);
+  return out;
+}
 
 // The shadow a penguin casts on the igloo wall while it reads by the lamp.
 const READER = [
@@ -242,29 +330,12 @@ const SPRITES = {
   chick_a: { x: 5, rows: ['..........', ...CHICK, '.yy....yy.'] },
   chick_b: { x: 5, rows: [...CHICK, '...yyyy...', '..........'] },
   cat_stand: { x: 10, rows: [...CAT, '...ococo....ococo...', '...ococo....ococo...', '...ooooo....ooooo...'] },
-  cat_walkA: { x: 10, rows: [...CAT, '..ocoooco..ocoooco..', '.oco..oco.oco..oco..', '.oo....oo.oo....oo..'] },
-  cat_walkB: { x: 10, rows: ['....................', ...CAT, '....ococo..ococo....', '....ooooo..ooooo....'] },
+  cat_walkA: { x: 10, rows: CAT_WALK[0] },
+  cat_walkB: { x: 10, rows: CAT_WALK[1] },
   // gathering itself before a jump, and absorbing the landing
   cat_crouch: { x: 10, rows: ['....................', '....................', ...CAT, '...ooooo....ooooo...'] },
   // mid-leap: front paws reaching, hind legs and tail trailing
-  cat_jump: {
-    x: 11,
-    rows: [
-      '...............o...o..',
-      '..............oco.oco.',
-      'oo............occccco.',
-      'oco..........occgccgo.',
-      '.oco.........occclplo.',
-      '..ocooooooooooollllo..',
-      '...occcCccCccccclllo..',
-      '...occcCccCcccccllcco.',
-      '...occcccccccccccoocco',
-      '..occoooooooooooo..oo.',
-      '.occo.................',
-      'occo..................',
-      '.oo...................',
-    ],
-  },
+  cat_jump: { x: 11, rows: CAT_LEAP },
   cat_sitA: { x: 10, rows: CAT_SIT },
   cat_sitB: {
     x: 10,
@@ -277,20 +348,16 @@ const SPRITES = {
     ],
   },
   // curled up, lifted onto the cushion of the bed
-  cat_sleep: {
-    x: 10,
-    rows: [
-      '............o...o...',
-      '...ooooooo.oco.oco..',
-      '..occCccCccocccccco.',
-      '.occCccCcccococcoco.',
-      'occcCccccccocclplco.',
-      'occccccccccollllllo.',
-      'occccCCCCCCCCCCccco.',
-      '.ooooooooooooooooo..',
-      ...Array(6).fill('....................'),
-    ],
-  },
+  cat_sleep: { x: 10, rows: [...CAT_CURLED, ...Array(6).fill(BLANK20)] },
+  // sneaking up low, making off with a fish, leaping into bed with it, and
+  // eating it there a bite at a time, eyes now open, now shut
+  cat_sneakA: { x: 10, rows: [BLANK20, BLANK20, ...CAT, '...ooooo....ooooo...'] },
+  cat_sneakB: { x: 10, rows: [BLANK20, BLANK20, ...CAT, '....ooooo..ooooo....'] },
+  cat_carryA: { x: 10, rows: overlay(CAT_WALK[0], 17, 4, MOUTHFUL) },
+  cat_carryB: { x: 10, rows: overlay(CAT_WALK[1], 17, 5, MOUTHFUL) },
+  cat_leapFish: { x: 11, rows: overlay(CAT_LEAP, 18, 4, MOUTHFUL) },
+  ...Object.fromEntries(BITES.flatMap((fish, i) => [CAT_AWAKE, CAT_CURLED].map((cat, k) =>
+    [`cat_eat${i + 1}${'AB'[k]}`, { x: 10, rows: [...overlay(cat, 18, 3, fish), ...Array(6).fill(BLANK20)] }]))),
   ...catBed('MUEZZA'),
   // riding, crouching to pump, facing us halfway through a turn, grabbing the
   // tail, and the board turning over in a kickflip: edge on, then upside down
@@ -301,7 +368,8 @@ const SPRITES = {
   sk_flipA: { x: 4, rows: [...SKATER, '..y..y..', '.oooooo.', '.oRRRRo.', '.oooooo.'] },
   sk_flipB: { x: 4, rows: [...SKATER, '..y..y..', '.oo..oo.', 'orrrrrro'] },
   // Pingu standing, walking, beaming, hugging his snowman with a little bounce,
-  // startled, glum, pushing a snowball, lifting it, and holding up a hat
+  // startled, glum, pushing a snowball, lifting it, holding up a hat, and
+  // holding his plush snowman to his chest
   pg_stand: { x: 9, rows: [BLANK17, ...pingu(), PINGU_FEET[0]] },
   pg_walkA: { x: 9, rows: [BLANK17, ...pingu(), PINGU_FEET[1]] },
   pg_walkB: { x: 9, rows: [...pingu(), PINGU_FEET[2], BLANK17] },
@@ -318,20 +386,43 @@ const SPRITES = {
   pg_lift: { x: 9, rows: [BLANK17, ...pingu('happy', LIFT), PINGU_FEET[0]] },
   pg_place: {
     x: 9,
-    rows: ['.............ooo.', '............ohhho', '............oiiio', ...pingu('happy', LIFT), PINGU_FEET[0]],
+    rows: ['............oooo.', '...........ohhhho', '...........oiiiio', ...pingu('happy', LIFT), PINGU_FEET[0]],
   },
+  pg_hold: { x: 9, rows: overlay([BLANK17, ...pingu('happy', HUG), PINGU_FEET[0]], 13, 7, PLUSH) },
   // his snowman: snowballs growing as he rolls them, which make its body and
   // head, its face and pink hat, and the heap of snow it tumbles into, in three
   // sizes for the snow he takes from it
   ...Object.fromEntries([2, 3, 4, 5, 6, 7, 8, 9].map((d) => [`sm_ball${d}`, snowball(d, true)])),
-  sm_head: { x: 8, rows: snowball(6).rows.map((r, j) => [...r].map((ch, i) => (FACE[j][i] === '.' ? ch : FACE[j][i])).join('')) },
-  sm_hat: { x: 4, rows: ['...oo...', '..ohho..', '.ohhhho.', 'ohhhhhho', 'oiiiiiio', '.oooooo.'] },
+  sm_head: { x: 8, rows: overlay(snowball(6).rows, 0, 0, FACE) },
+  // a knitted beanie, pulled down over the top of the head
+  sm_hat: { x: 4, rows: ['..oooo..', '.ohhhho.', 'ohhhhhho', 'oiiiiiio'] },
+  sm_plush: { x: 3, rows: PLUSH },
   sm_heapC: {
     x: 7,
     rows: ['.....oo.......', '...oowwo.oo...', '..owwswowwsoo.', '.owwswwwwswwwo', 'owwwswwswwwswo', 'oooooooooooooo'],
   },
   sm_heapB: { x: 5, rows: ['...oo.....', '..owwo.oo.', '.owwsowwso', 'owwswwwswo', 'oooooooooo'] },
   sm_heapA: { x: 3, rows: ['..oo..', '.owwo.', 'owswwo', 'oooooo'] },
+  // the fisherman standing, chipping at the ice, fishing, a bite, hauling in,
+  // pleased with his catch, putting it in his bucket, startled, and glum
+  fs_stand: { x: 9, rows: fisher() },
+  fs_chipA: { x: 9, rows: holding(fisher(), PICK.up) },
+  fs_chipB: { x: 9, rows: holding(fisher(), PICK.down) },
+  fs_fish: { x: 9, rows: holding(fisher(), ROD.out, [23, 7, 19]) },
+  fs_bite: { x: 9, rows: holding(fisher(), ROD.dip, [23, 11, 19]) },
+  fs_reel: { x: 9, rows: holding(fisher(), ROD.up, [18, 5, 10]) },
+  fs_catch: { x: 9, rows: holding(fisher('happy'), ROD.up, [18, 5, 10]) },
+  fs_drop: { x: 9, rows: holding(fisher('happy'), []) },
+  fs_shock: { x: 9, rows: fisher(null, [...FISHER.slice(0, 11), ...FLIPPER_OUT, ...FISHER.slice(15)]) },
+  fs_sad: { x: 9, rows: fisher('low') },
+  // his hole in the ice, cracked, half open and open; his catch; and his
+  // bucket, empty and with the fish in it
+  fi_hole1: { x: 2, rows: ['o.o..', '.o.oo'] },
+  fi_hole2: { x: 3, rows: ['.ooooo.', 'oDDDDDo', '.ooooo.'] },
+  fi_hole3: { x: 4, rows: ['..ooooo..', '.oDDDDDo.', 'oDDEDDDDo', '.ooooooo.'] },
+  fi_fish: { x: 4, rows: ['...oooo.', 'o.ouuuuo', 'ooouuowo', 'o.oUUUUo', '...oooo.'] },
+  fi_bucket: { x: 3, rows: ['..ooo..', '.o...o.', 'ooooooo', 'oqqqqqo', 'oQQQQQo', '.oqqqo.', '.ooooo.'] },
+  fi_bucketFull: { x: 3, rows: ['..ooo..', '.oo.oo.', 'oooUooo', 'oqqqqqo', 'oQQQQQo', '.oqqqo.', '.ooooo.'] },
   // reading, a page lifting, standing up and falling over, and glancing up
   reader_read: { x: 6, rows: READER },
   reader_turnA: {
@@ -895,7 +986,7 @@ function skater() {
 // ---------------------------------------------------------------- actors
 
 // Turns a list of steps into keyframes for position, facing, pose and hops.
-// Steps: ['walk', x] ['slide', x, seconds] ['jump', x, seconds, height]
+// Steps: ['walk', x] ['slide', x, seconds] ['jump', x, seconds, height, pose?]
 // ['move', x, seconds, pose] ['face', ±1] ['hop', seconds, height]
 // ['until', time, pose] ['mark', name] or [pose, seconds] to hold a pose. Marks
 // note the time, for others to fall in with. The path has to end where it
@@ -917,7 +1008,7 @@ function plan({ x, dir, speed, pose = 'stand', period, steps }) {
     x = to;
     move.push({ t, x, ease: 'linear' });
   };
-  for (const [kind, a, b, c] of steps) {
+  for (const [kind, a, b, c, d] of steps) {
     if (kind === 'walk') {
       if (a === x) throw new Error('zero-length walk');
       setFace(Math.sign(a - x));
@@ -930,7 +1021,7 @@ function plan({ x, dir, speed, pose = 'stand', period, steps }) {
     } else if (kind === 'jump') {
       // a hop carried forward at an even pace, so the two trace an arc
       setFace(Math.sign(a - x));
-      setPose('jump');
+      setPose(d ?? 'jump');
       hops.push({ t, d: b, h: c });
       moveTo(a, b);
     } else if (kind === 'move') {
@@ -1019,6 +1110,15 @@ const LOOKS = {
     sleep: () => use('cat_sleep'),
     crouch: () => use('cat_crouch'),
     jump: () => use('cat_jump'),
+    sneak: () => use('cat_sneakA', 'wa wz') + use('cat_sneakB', 'wb wz', 0),
+    carry: () => use('cat_carryA', 'wa wc') + use('cat_carryB', 'wb wc', 0),
+    leapFish: () => use('cat_leapFish'),
+    ...Object.fromEntries([1, 2, 3].map((n) => [`eat${n}`, () => use(`cat_eat${n}A`, 'wa we') + use(`cat_eat${n}B`, 'wb we', 0)])),
+  },
+  fisher: {
+    stand: () => use('fs_stand'),
+    chip: () => use('fs_chipA', 'wa wh') + use('fs_chipB', 'wb wh', 0),
+    ...Object.fromEntries(['fish', 'bite', 'reel', 'catch', 'drop', 'shock', 'sad'].map((pose) => [pose, () => use(`fs_${pose}`)])),
   },
   pingu: {
     walk: () => use('pg_walkA', 'wa wp') + use('pg_walkB', 'wb wp', 0),
@@ -1031,6 +1131,7 @@ const LOOKS = {
     pick: () => use('pg_pushA'),
     lift: () => use('pg_lift'),
     place: () => use('pg_place'),
+    hold: () => use('pg_hold'),
   },
 };
 
@@ -1038,6 +1139,7 @@ const LOOKS = {
 const EXTRAS = {
   cat: { sleep: (theme) => snores(theme, 6, -19) },
   pingu: { hug: (theme) => hearts(theme, 3, -25), shock: (theme) => bang(theme, -1, -24) },
+  fisher: { shock: (theme) => bang(theme, 0, -26) },
 };
 
 // Three z's drifting up from a sleeping head at (x, y).
@@ -1091,6 +1193,22 @@ function actorSvg(theme, actor, p) {
   return `<g transform="translate(${p.start} ${lane})">${behind}${figure}${before}</g>`;
 }
 
+// Keyframes that carry a prop from stop to stop, [time, [x, y], easing] each,
+// over the shared period.
+function travelCss(name, keys) {
+  const frames = keys.map(([t, [x, y], ease = 'linear']) =>
+    `${pct(t, PERIOD)}{transform:translate(${f(x)}px,${f(y)}px);animation-timing-function:${ease}}`);
+  return `@keyframes ${name}{${frames.join('')}}.${name}{animation:${name} ${PERIOD}s linear infinite}`;
+}
+
+// Keyframes that show a prop only during the [from, to] windows of the period.
+function duringCss(name, windows) {
+  const at = new Map([[0, 0]]);
+  for (const [from, to] of windows) at.set(from, 1).set(to, 0);
+  const list = [...at].sort((a, b) => a[0] - b[0]).map(([t, v]) => ({ t, v }));
+  return `${stepKeyframes(name, list, PERIOD, (v) => `opacity:${v}`)}.${name}{animation:${name} ${PERIOD}s steps(1,end) infinite}`;
+}
+
 // Where a plan has its actor at time t.
 function whereAt(p, t) {
   const i = p.move.findIndex((k) => k.t > t);
@@ -1101,39 +1219,36 @@ function whereAt(p, t) {
 
 // Pingu's snowman, at the front on the right, and the snow it is made of. A
 // heap is left of the last one: Pingu rolls the body out of it and the head out
-// of what remains, lifts the head on and gives it its hat, until Muezza pounces
-// and the lot tumbles back into a heap. It keeps time with the marks the two of
-// them leave in their plans.
+// of what remains, lifts the head on, gives it its hat and his plush snowman to
+// hold, until Muezza pounces and the lot tumbles back into a heap. It keeps
+// time with the marks the two of them leave in their plans.
 const SNOWMAN = { x: 232, lane: 83 };
 
 function snowman({ m, pg }) {
   const { x, lane } = SNOWMAN;
   const heap = [x + 18, lane + 1];
   const dropped = [x - 20, lane + 2]; // where the hat comes down
+  const plushDropped = [x - 30, lane + 2]; // and the plush
   const front = lane + 2; // the head is rolled a little in front of the body
   const knock = m.marks.pounce;
   const fallen = knock + 0.5;
-  const { body, bodyDone, head, headDone, lift, pick, place } = pg.marks;
+  const { body, bodyDone, head, headDone, lift, pick, place, fetch, give } = pg.marks;
   const lifted = lift + 1;
   const placed = place + 0.8;
+  const given = give + 0.8;
   const UP = 'cubic-bezier(.33,.67,.67,1)';
   const DOWN = 'cubic-bezier(.33,0,.67,.33)';
   // a snowball rolls along just ahead of Pingu's flippers, by its right-hand edge
   const edge = (t) => whereAt(pg, t) - 7;
   const stand = edge(bodyDone); // where the body ends up
   const onBody = [stand - 2, lane - 10];
-  const hat = [x, onBody[1] - 7];
+  const hat = [x, onBody[1] - 6];
 
   const css = [];
-  const travel = (name, keys) => {
-    const frames = keys.map(([t, [kx, ky], ease = 'linear']) =>
-      `${pct(t, PERIOD)}{transform:translate(${f(kx)}px,${f(ky)}px);animation-timing-function:${ease}}`);
-    css.push(`@keyframes ${name}{${frames.join('')}}`, `.${name}{animation:${name} ${PERIOD}s linear infinite}`);
-  };
+  const travel = (name, keys) => css.push(travelCss(name, keys));
   // shown between `from` and `to`, or hidden then if `hide` is set
   const shown = (name, from, to, hide = false) => {
-    const list = [{ t: 0, v: hide ? 1 : 0 }, { t: from, v: hide ? 0 : 1 }, { t: to, v: hide ? 1 : 0 }];
-    css.push(stepKeyframes(name, list, PERIOD, (v) => `opacity:${v}`), `.${name}{animation:${name} ${PERIOD}s steps(1,end) infinite}`);
+    css.push(duringCss(name, hide ? [[0, from], [to, PERIOD]] : [[from, to]]));
     return `<g class="${name}"${hide ? '' : ' opacity="0"'}>`;
   };
   // a snowball growing a size at a time as it is rolled, the last size kept on
@@ -1157,6 +1272,10 @@ function snowman({ m, pg }) {
     [0, dropped], [placed - 0.05, dropped], [placed, hat], [knock, hat, UP],
     [knock + 0.3, [x - 9, hat[1] - 5], DOWN], [knock + 0.65, dropped], [PERIOD, dropped],
   ]);
+  travel('smp', [
+    [0, plushDropped], [given - 0.05, plushDropped], [given, [x, lane]], [knock, [x, lane], UP],
+    [knock + 0.25, [x - 14, lane - 8], DOWN], [knock + 0.6, plushDropped], [PERIOD, plushDropped],
+  ]);
   const svg = [
     // the heap shrinks as the snow is rolled up out of it
     `<g transform="translate(${heap[0]} ${heap[1]})">`,
@@ -1166,6 +1285,42 @@ function snowman({ m, pg }) {
     `<g class="smb">${growing('smb', body, bodyDone, [2, 3, 4, 5, 6, 7, 8, 9], fallen)}</g>`,
     `<g class="smh">${growing('smh', head, headDone, [2, 3, 4, 5, 6], lifted)}${shown('smhf', lifted, fallen)}${use('sm_head')}</g></g>`,
     `${shown('smcs', pick + 0.3, placed, true)}<g class="smc">${use('sm_hat')}</g></g>`,
+    `${shown('smps', fetch + 0.3, given, true)}<g class="smp">${use('sm_plush')}</g></g>`,
+  ].join('');
+  return { svg, css: css.join('\n') };
+}
+
+// The fishing spot in the middle: the hole the fisherman chips in the ice and
+// that freezes over again once he has given up, the fish he hauls out of it
+// and puts in his bucket, and the bucket Muezza steals it from.
+const FISHING = { hole: 113, bucket: 144, lane: 75 };
+
+function fishing({ fi, m }) {
+  const { hole, bucket, lane } = FISHING;
+  const { dig, dug, hooked, drop, stored, freeze } = fi.marks;
+  const robbed = m.marks.steal + 0.25;
+  const css = [];
+  const shown = (name, windows, inner) => {
+    css.push(duringCss(name, windows));
+    return `<g class="${name}"${windows.some(([from]) => from <= 0) ? '' : ' opacity="0"'}>${inner}</g>`;
+  };
+  const swim = [hole, lane + 1];
+  const dangling = [fi.start - 10, lane - 5]; // from the line of the raised rod
+  const held = [fi.start + 9, lane - 6]; // out over the bucket, once he has turned to it
+  css.push(travelCss('fgf', [
+    [0, swim], [hooked, swim, 'cubic-bezier(.2,.7,.4,1)'], [hooked + 0.7, dangling], [drop, dangling],
+    [drop + 0.01, held, 'cubic-bezier(.5,0,.8,.6)'], [stored, [bucket, lane - 2]], [stored + 0.01, swim], [PERIOD, swim],
+  ]));
+  const svg = [
+    `<g transform="translate(${hole} ${lane + 1})">`,
+    shown('fgh1', [[dig + 1, dig + 2], [freeze + 2.4, freeze + 3.6]], use('fi_hole1')),
+    shown('fgh2', [[dig + 2, dug], [freeze + 1.2, freeze + 2.4]], use('fi_hole2')),
+    shown('fgh3', [[dug, freeze + 1.2]], use('fi_hole3')),
+    `</g><g transform="translate(${bucket} ${lane})">`,
+    shown('fgb', [[0, stored], [robbed, PERIOD]], use('fi_bucket')),
+    shown('fgbf', [[stored, robbed]], use('fi_bucketFull')),
+    '</g>',
+    shown('fgs', [[hooked, stored]], `<g class="fgf">${use('fi_fish')}</g>`),
   ].join('');
   return { svg, css: css.join('\n') };
 }
@@ -1173,7 +1328,7 @@ function snowman({ m, pg }) {
 // ---------------------------------------------------------------- cast
 
 // Everyone shares one period so the scene can be choreographed.
-const PERIOD = 56;
+const PERIOD = 72;
 
 // Back to front. Lanes are the y of the ground each actor walks on.
 const CAST = [
@@ -1184,6 +1339,7 @@ const CAST = [
       ['stand', 2.5], ['flap', 1.2], ['walk', 178], ['stand', 2], ['hop', 0.45, 4], ['stand', 0.3],
       ['hop', 0.45, 4], ['stand', 2], ['walk', 258], ['stand', 4], ['flap', 1], ['stand', 2],
       ['walk', 200], ['stand', 3], ['face', 1], ['stand', 2.5], ['flap', 0.8], ['stand', 1.5], ['face', -1],
+      ['stand', 2], ['walk', 186], ['stand', 3], ['flap', 1], ['stand', 2], ['walk', 200], ['stand', 1.5], ['face', -1],
     ] },
   },
   {
@@ -1192,48 +1348,67 @@ const CAST = [
     plan: { x: 150, dir: -1, speed: 7, pose: 'walk', steps: [
       ['walk', 96], ['stand', 2.5], ['face', 1], ['stand', 1], ['face', -1], ['stand', 0.8],
       ['walk', 62], ['stand', 2.5], ['walk', 176], ['stand', 3], ['walk', 130], ['stand', 2], ['face', 1],
-      ['stand', 1], ['walk', 150], ['stand', 0.8], ['face', -1],
+      ['stand', 1], ['walk', 84], ['stand', 3], ['flap', 1], ['stand', 2], ['walk', 150], ['stand', 1], ['face', -1],
     ] },
   },
   {
-    // a parent with its chick in tow
+    // a parent with its chick in tow, pottering about on the left
     id: 'c', kind: 'penguin', lane: 71, blinkDelay: -2.2, companion: { kind: 'chick', dx: -13 },
-    plan: { x: 120, dir: 1, speed: 5.5, pose: 'walk', steps: [
-      ['walk', 208], ['stand', 3], ['walk', 96], ['stand', 2], ['flap', 1], ['stand', 1.5], ['face', 1],
-      ['stand', 1], ['walk', 120],
+    plan: { x: 66, dir: 1, speed: 5.5, pose: 'walk', steps: [
+      ['walk', 92], ['stand', 3], ['flap', 1], ['stand', 2], ['walk', 52], ['stand', 2.5], ['face', 1], ['stand', 1.5],
+      ['walk', 84], ['stand', 4], ['flap', 1], ['stand', 2], ['walk', 58], ['stand', 3], ['face', 1], ['stand', 2],
+      ['walk', 90], ['stand', 3], ['walk', 66], ['stand', 1.5], ['flap', 1], ['stand', 2], ['walk', 80], ['stand', 3],
+      ['walk', 66], ['stand', 1], ['face', 1],
     ] },
+  },
+  {
+    // fishes through a hole he chips in the ice, and puts his catch in a bucket
+    // behind him, for Muezza to steal
+    id: 'fi', kind: 'fisher', lane: 74, shadow: 12,
+    plan: ({ m }) => ({ x: 128, dir: -1, steps: [
+      ['stand', 0.8], ['mark', 'dig'], ['chip', 3], ['mark', 'dug'], ['stand', 0.4], ['fish', 13], ['bite', 0.5],
+      ['reel', 0.6], ['until', m.marks.watch + 1.2, 'fish'], ['bite', 1], ['mark', 'hooked'], ['reel', 0.7],
+      ['catch', 1.3], ['face', 1], ['mark', 'drop'], ['drop', 0.6], ['mark', 'stored'], ['face', -1],
+      ['until', m.marks.pass, 'fish'], ['shock', 1.2], ['face', 1], ['sad', 3], ['face', -1], ['mark', 'freeze'],
+    ] }),
   },
   {
     // Muezza naps while Pingu builds his snowman, then jumps out for a round,
-    // pounces on the snowman to play, and runs back to bed when it falls apart
+    // pounces on the snowman to play, waits for the fisherman to land a fish,
+    // sneaks up and steals it from his bucket, and eats it in bed
     id: 'm', kind: 'cat', lane: 78, shadow: 16, bed: true,
     plan: { x: 30, dir: 1, speed: 12, pose: 'sleep', steps: [
-      ['sleep', 25.5], ['sit', 2], ['jump', 64, 0.7, 10], ['crouch', 0.25], ['walk', 120], ['sit', 3], ['walk', 206],
+      ['sleep', 26], ['sit', 1.5], ['jump', 64, 0.7, 10], ['crouch', 0.25], ['walk', 90], ['sit', 2.5], ['walk', 206],
       ['sit', 1.2], ['crouch', 0.7], ['jump', 216, 0.45, 4], ['mark', 'pounce'], ['stand', 0.3], ['hop', 0.4, 5],
-      ['face', -1], ['move', 64, 5, 'walk'], ['stand', 0.4], ['crouch', 0.3], ['jump', 30, 0.7, 10], ['sit', 1.5],
-      ['face', 1], ['sit', 1.2],
+      ['face', -1], ['stand', 0.4], ['walk', 172], ['mark', 'watch'], ['sit', 6.5], ['move', 152, 4, 'sneak'],
+      ['mark', 'steal'], ['crouch', 0.5], ['move', 128, 0.8, 'carry'], ['mark', 'pass'], ['move', 64, 2.3, 'carry'],
+      ['jump', 30, 0.7, 10, 'leapFish'], ['face', 1], ['eat1', 2], ['eat2', 2], ['eat3', 1.6],
     ] },
   },
   {
-    // walks to the left edge and belly-slides back across the field
+    // walks to the left edge and belly-slides back across the field, then
+    // keeps out of the way on the left until the fish has been stolen
     id: 'b', kind: 'penguin', lane: 84, blinkDelay: -0.4,
     plan: { x: 170, dir: -1, speed: 7, pose: 'walk', steps: [
       ['walk', 74], ['stand', 1.5], ['face', 1], ['stand', 0.8], ['slide', 160, 5], ['lie', 1],
-      ['stand', 2], ['walk', 120], ['stand', 2.5], ['flap', 1], ['stand', 1.5], ['walk', 170],
-      ['stand', 1], ['face', -1],
+      ['stand', 2], ['walk', 120], ['stand', 2.5], ['flap', 1], ['stand', 1.5], ['walk', 62], ['stand', 3],
+      ['flap', 1], ['until', 55.5, 'stand'], ['walk', 170], ['face', -1],
     ] },
   },
   {
-    // Pingu builds a snowman out of a heap of snow, hugs it, steps back to
-    // admire it, and gets a fright when Muezza knocks it back into a heap
+    // Pingu builds a snowman out of a heap of snow, gives it his plush snowman,
+    // hugs it, steps back to admire it, and gets a fright when Muezza knocks it
+    // back into a heap
     id: 'pg', kind: 'pingu', lane: 86, shadow: 12,
     plan: ({ m }) => ({ x: 258, dir: -1, speed: 6, steps: [
       ['stand', 0.6], ['mark', 'body'], ['move', 245, 7, 'push'], ['mark', 'bodyDone'], ['stand', 0.4], ['face', 1],
       ['walk', 258], ['face', -1], ['stand', 0.3], ['mark', 'head'], ['move', 253, 3.5, 'push'], ['mark', 'headDone'],
       ['stand', 0.3], ['mark', 'lift'], ['lift', 1], ['hop', 0.4, 3], ['walk', 222], ['mark', 'pick'], ['pick', 0.6],
-      ['face', 1], ['mark', 'place'], ['place', 0.8], ['happy', 1.5], ['until', m.marks.pounce - 9.5, 'hug'],
+      ['face', 1], ['mark', 'place'], ['place', 0.8], ['happy', 0.8], ['walk', 211], ['mark', 'fetch'], ['pick', 0.6],
+      ['move', 222, 1.8, 'hold'], ['mark', 'give'], ['hold', 0.8], ['happy', 1.2], ['until', m.marks.pounce - 9.5, 'hug'],
       ['walk', 258], ['face', -1], ['until', m.marks.pounce - 1.5, 'happy'], ['until', m.marks.pounce + 0.15, 'stand'],
-      ['shock', 1.3], ['sad', 3],
+      ['shock', 1.3], ['sad', 3], ['stand', 4], ['face', 1], ['walk', 266], ['stand', 2.5], ['face', -1], ['walk', 258],
+      ['until', PERIOD - 2, 'stand'], ['happy', 1.5],
     ] }),
   },
 ];
@@ -1244,50 +1419,87 @@ const LINES = [
   [['Currently building '], ['Muezza', true], [' and learning new things along the way.']],
   [['I enjoy dabbling in all kinds of tech.']],
 ];
-const FONT = `ui-monospace,SFMono-Regular,'SF Mono',Menlo,Consolas,'Liberation Mono',monospace`;
-const FONT_SIZE = 14;
-const ADV = 8.4; // 0.6em, the advance of the common monospace fonts
-const LINE_Y = [30, 54];
+// A small pixel font, so the text is drawn as crisply as the rest of the scene
+// at whatever size it is shown. Each glyph is the row it starts on and its
+// rows from there down: capitals and ascenders stand 7 rows tall from row 0,
+// the x-height is 5 rows from row 2, and descenders hang 2 rows below.
+const PIXEL_FONT = {
+  a: [2, '.##. ...# .### #..# .###'],
+  b: [0, '#... #... ###. #..# #..# #..# ###.'],
+  c: [2, '.### #... #... #... .###'],
+  d: [0, '...# ...# .### #..# #..# #..# .###'],
+  e: [2, '.##. #..# #### #... .###'],
+  f: [0, '.## #.. ### #.. #.. #.. #..'],
+  g: [2, '.### #..# #..# #..# .### ...# .##.'],
+  h: [0, '#... #... ###. #..# #..# #..# #..#'],
+  i: [0, '# . # # # # #'],
+  j: [0, '..# ... ..# ..# ..# ..# ..# ..# ##.'],
+  k: [0, '#... #... #..# #.#. ##.. #.#. #..#'],
+  l: [0, '#. #. #. #. #. #. .#'],
+  m: [2, '##.#. #.#.# #.#.# #.#.# #.#.#'],
+  n: [2, '###. #..# #..# #..# #..#'],
+  o: [2, '.##. #..# #..# #..# .##.'],
+  r: [2, '#.## ##.. #... #... #...'],
+  s: [2, '.### #... .##. ...# ###.'],
+  t: [1, '.#. ### .#. .#. .#. ..#'],
+  u: [2, '#..# #..# #..# #..# .###'],
+  w: [2, '#...# #...# #.#.# #.#.# .#.#.'],
+  y: [2, '#..# #..# #..# #..# .### ...# .##.'],
+  z: [2, '#### ...# .##. #... ####'],
+  C: [0, '.### #... #... #... #... #... .###'],
+  I: [0, '### .#. .#. .#. .#. .#. ###'],
+  M: [0, '#...# ##.## #.#.# #.#.# #...# #...# #...#'],
+  '.': [6, '#'],
+  ' ': [0, '..'],
+};
+const TEXT_PX = 2; // svg units to a pixel of the font
+const LINE_Y = [30, 54]; // where each line's capitals end
 const TYPE_START = 0.9;
 const TYPE_EVERY = 0.042;
 const LINE_PAUSE = 0.55;
 
-// Every glyph is its own <text> at a fixed cell, so the typing lines up no
-// matter which monospace font the viewer ends up with.
+// Each glyph is its own path, shown when it is typed, with a caret stepping
+// along behind the last one and blinking once the typing is done.
 function typedText(theme) {
   const lines = LINES.map((parts) => parts.flatMap(([s, bold]) => [...s].map((ch) => ({ ch, bold }))));
+  const advance = (ch) => (PIXEL_FONT[ch][1].split(' ')[0].length + 1) * TEXT_PX;
   const glyphs = [];
-  const caret = []; // where the caret is at which time
+  const caret = []; // where the caret is from which time on
   let at = TYPE_START;
   lines.forEach((chars, li) => {
-    const x0 = Math.round((W * PX - chars.length * ADV) / 2);
-    const y = LINE_Y[li];
+    const width = chars.reduce((w, { ch }) => w + advance(ch), -TEXT_PX);
+    let x = Math.round((W * PX - width) / 2 / TEXT_PX) * TEXT_PX;
+    const top = LINE_Y[li] - 7 * TEXT_PX;
     if (li > 0) at += LINE_PAUSE;
-    caret.push({ t: li > 0 ? at - 0.25 : 0, x: x0, y });
-    caret.push({ t: at, x: x0, y, typing: chars.length });
+    caret.push({ t: li > 0 ? at - 0.25 : 0, x, y: top });
     chars.forEach(({ ch, bold }, i) => {
-      if (ch === ' ') return;
-      const style = bold ? ` font-weight="700" fill="${theme.accent}"` : '';
-      glyphs.push(`<text x="${f(x0 + (i + 0.5) * ADV)}" y="${y}"${style} class="ch" style="animation-delay:${f(at + i * TYPE_EVERY)}s">${ch}</text>`);
+      const [row, art] = PIXEL_FONT[ch];
+      // a rect per run of pixels in a row, a little wider in bold
+      const d = art.split(' ').flatMap((r, j) => [...r.matchAll(/#+/g)].map(({ 0: run, index }) => {
+        const w = run.length * TEXT_PX + (bold ? 1 : 0);
+        return `M${x + index * TEXT_PX} ${top + (row + j) * TEXT_PX}h${w}v${TEXT_PX}h-${w}z`;
+      })).join('');
+      const t = at + i * TYPE_EVERY;
+      if (d) glyphs.push(`<path class="ch" style="animation-delay:${f(t)}s"${bold ? ` fill="${theme.accent}"` : ''} d="${d}"/>`);
+      x += advance(ch);
+      caret.push({ t, x, y: top });
     });
     at += chars.length * TYPE_EVERY;
-    caret.push({ t: at, x: x0 + chars.length * ADV, y });
   });
   const end = at;
   // the caret rests after the last glyph; keyframes move it relative to that
   const rest = caret.at(-1);
-  const frames = caret.map(({ t, x, y, typing }) =>
-    `${pct(t, end)}{transform:translate(${f(x - rest.x)}px,${y - rest.y}px);animation-timing-function:${typing ? `steps(${typing},start)` : 'steps(1,end)'}}`);
+  const frames = caret.map(({ t, x, y }) => `${pct(t, end)}{transform:translate(${x - rest.x}px,${y - rest.y}px)}`);
   const css = [
     '@keyframes type{from{opacity:0}to{opacity:1}}',
     '.ch{animation:type .01s linear both}',
     `@keyframes caret{${frames.join('')}}`,
-    `.caret{animation:caret ${f(end)}s linear both}`,
+    `.caret{animation:caret ${f(end)}s steps(1,end) both}`,
     '@keyframes blinker{0%{opacity:1}50%{opacity:0}}',
     `.blinker{animation:blinker 1.06s steps(1,end) ${f(end)}s infinite}`,
   ];
-  const svg = `<g font-family="${FONT}" font-size="${FONT_SIZE}" fill="${theme.text}" text-anchor="middle">${glyphs.join('')}</g>`
-    + `<g class="caret"><rect class="blinker" x="${f(rest.x + 2)}" y="${rest.y - 12}" width="${ADV - 1}" height="15" fill="${theme.accent}"/></g>`;
+  const svg = `<g fill="${theme.text}" shape-rendering="crispEdges">${glyphs.join('')}`
+    + `<g class="caret"><rect class="blinker" x="${rest.x}" y="${rest.y}" width="${4 * TEXT_PX}" height="${7 * TEXT_PX}" fill="${theme.accent}"/></g></g>`;
   return { svg, css: css.join('\n') };
 }
 
@@ -1301,7 +1513,7 @@ function snowfall() {
     flakes.push({
       x,
       // flakes under the text start below it, the rest fall from the top
-      top: x > 44 && x < 236 ? 22 : -2,
+      top: x > 28 && x < 252 ? 22 : -2,
       land: HORIZON + 2 + Math.floor(r() * (H - HORIZON - 4)),
       dur: f(9 + r() * 9),
       delay: f(-r() * 18),
@@ -1350,18 +1562,21 @@ function build(name) {
   css.push('@keyframes lamp{0%,100%{opacity:1}9%{opacity:.86}14%{opacity:.97}31%{opacity:.9}38%{opacity:1}57%{opacity:.84}63%{opacity:.95}80%{opacity:.89}}');
   css.push('.lamp{animation:lamp 2.7s linear infinite}');
 
-  // a plan can be written around the plans before it, to keep time with them
+  // a plan can be written around others, to keep time with them, so those
+  // are worked out once the plain ones are done
   const plans = {};
+  for (const follows of [false, true])
+    for (const actor of CAST)
+      if ((typeof actor.plan === 'function') === follows)
+        plans[actor.id] = plan({ period: PERIOD, ...(follows ? actor.plan(plans) : actor.plan) });
+  // the fishing gear lies in front of the fisherman, behind Muezza's path,
+  // and the snowman stands just behind Pingu
+  const props = { m: fishing(plans), pg: snowman(plans) };
+  for (const prop of Object.values(props)) css.push(prop.css);
   const actors = CAST.map((actor) => {
-    const p = plan({ period: PERIOD, ...(typeof actor.plan === 'function' ? actor.plan(plans) : actor.plan) });
-    plans[actor.id] = p;
-    css.push(actorCss(actor.id, p));
-    return actorSvg(theme, actor, p);
+    css.push(actorCss(actor.id, plans[actor.id]));
+    return (props[actor.id]?.svg ?? '') + actorSvg(theme, actor, plans[actor.id]);
   });
-  // Pingu's snowman stands just behind him
-  const props = snowman(plans);
-  css.push(props.css);
-  actors.splice(CAST.findIndex((actor) => actor.id === 'pg'), 0, props.svg);
 
   // walk cycles, flapping, tail swish, blinking
   css.push('@keyframes fr{0%{opacity:1}50%{opacity:0}}');
@@ -1371,6 +1586,9 @@ function build(name) {
   css.push('.wc{animation-duration:.4s}.wc.wb{animation-delay:-.2s}');
   css.push('.wf{animation-duration:.24s}.wf.wb{animation-delay:-.12s}');
   css.push('.ws{animation-duration:1.7s}.ws.wb{animation-delay:-.85s}');
+  css.push('.wz{animation-duration:.8s}.wz.wb{animation-delay:-.4s}');
+  css.push('.we{animation-duration:.7s}.we.wb{animation-delay:-.35s}');
+  css.push('.wh{animation-duration:.5s}.wh.wb{animation-delay:-.25s}');
   css.push('@keyframes zz{0%{transform:translate(0,0);opacity:0}15%,75%{opacity:1}100%{transform:translate(5px,-10px);opacity:0}}');
   css.push('.zz{opacity:0;animation:zz 2.7s linear infinite}');
   css.push('@keyframes ht{0%{transform:translate(0,0);opacity:0}20%,70%{opacity:1}100%{transform:translate(-2px,-8px);opacity:0}}');
@@ -1398,7 +1616,7 @@ function build(name) {
 
   css.push('@media (prefers-reduced-motion:reduce){*{animation:none!important}.fall{opacity:0}}');
 
-  const alt = 'Currently building Muezza and learning new things along the way. I enjoy dabbling in all kinds of tech. Below, five penguins wander across a snowfield between an iceberg and a glowing igloo, where another reads a book by lamplight, seen only as its shadow on the ice. Far back by the horizon, a penguin has a session on a small halfpipe: it drops in, pumps up speed, turns in the air over the lips, kickflips across the flat and airs back onto the deck for a rest. In front on the right, Pingu in white earmuffs and a light blue scarf rolls a snowman out of a heap of snow, gives it a pink hat and hugs it, while Muezza the cat naps in a bed labeled MUEZZA. Then she wakes, jumps out, pounces on the snowman to play, knocks it back into a heap and runs back to bed.';
+  const alt = 'Currently building Muezza and learning new things along the way. I enjoy dabbling in all kinds of tech. Below, five penguins wander across a snowfield between an iceberg and a glowing igloo, where another reads a book by lamplight, seen only as its shadow on the ice. Far back by the horizon, a penguin has a session on a small halfpipe: it drops in, pumps up speed, turns in the air over the lips, kickflips across the flat and airs back onto the deck for a rest. In front on the right, Pingu in white earmuffs and a light blue scarf rolls a snowman out of a heap of snow, gives it a pink beanie and his little plush snowman to hold and hugs it, while Muezza the cat naps in a bed labeled MUEZZA. Then she wakes, jumps out, pounces on the snowman to play and knocks it back into a heap. In the middle, a penguin in a green bobble hat chips a hole in the ice and fishes; Muezza waits until his catch is in his bucket, sneaks up, steals it and eats it in bed.';
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W * PX}" height="${H * PX}" viewBox="0 0 ${W * PX} ${H * PX}" role="img" aria-label="${alt}">
 <style>
 ${css.join('\n')}
